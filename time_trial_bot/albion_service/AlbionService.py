@@ -35,7 +35,7 @@ class AlbionService:
     def check_user_in_guild(self, username):
         members_list = self.get_members()
         if members_list:
-            if username.lower() in map(str.lower, members_list)
+            if username.lower() in map(str.lower, members_list):
                 return True, True
         else:
             return False, False
