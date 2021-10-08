@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, MissingPermissions
 
 from albion_service.AlbionService import AlbionService
 
@@ -15,6 +15,75 @@ class TTBot(Bot):
         self.disc_server_name = "Time Trial"
         self.disc_gid = None
         self.service = AlbionService(self.guild_id)
+
+        @self.command(
+            name="register",
+            help="Assign Time Trial role and changes nickname",
+            pass_context=True
+        )
+        async def register(ctx: discord.ext.commands.Context, ign):
+            player_data = self.service.check_user_guild(ign)
+            if player_data:
+                guild_id = player_data["guild_id"]
+
+                # if player is already in guild, give "Time Trial" role
+                if guild_id == self.guild_id:
+                    # change server nickname to ign
+                    await ctx.author.edit(nick=ign)
+                    role = discord.utils.get(ctx.guild.roles, name="Time Trial")
+                    await ctx.author.add_roles(role)
+                    print("Success!", ign, "added!")
+                    await ctx.reply(f'Successfully registered!')
+                else:
+                    await ctx.reply(f'You need to join Time Trial in-game first!')
+            else:
+                await ctx.reply(f'Failed to retrieve data. Please try again or contact @alliance-officer')
+
+        @self.command(
+            name="check",
+            help="Check the users who are not in guild or have no nickname set (who will have roles removed on a purge)",
+            pass_context=True
+        )
+        async def check(ctx):
+            purged_members = await self.check_non_guild_members(purge=False)
+            embed = discord.Embed(color=discord.Color.blurple(), title="Member Check Report", discription='')
+            msg = "No users are to be purged!"
+            if len(purged_members) > 0:
+                users = ''
+                for user in purged_members:
+                    users += '\n- ' + user
+                msg = f'Following users will have their Time Trial role removed on a purge. {users}'
+
+            embed.description = msg
+
+            await ctx.reply(embed=embed)
+
+        @self.command(
+            name="purge",
+            help="Remove Time Trial role from the users who are not in guild or have no nickname set",
+            pass_context=True
+        )
+        @commands.has_permissions(manage_roles=True)
+        async def purge(ctx):
+            purged_members = await self.check_non_guild_members(purge=True)
+            embed = discord.Embed(color=discord.Color.blurple(), title="Purge Report", discription='')
+            msg = "No users were purged!"
+            if len(purged_members) > 0:
+                users = ''
+                for user in purged_members:
+                    users += '\n- ' + user
+                msg = f'Following users had their Time Trial role removed. {users}'
+
+            embed.description = msg
+
+            await ctx.reply(embed=embed)
+
+        @purge.error
+        async def purge_error(ctx, error):
+            print("Error!", error)
+            if isinstance(error, MissingPermissions):
+                text = "Sorry {}, you do not have permissions to do that!".format(ctx.message.author)
+                await ctx.reply(text)
 
     def set_disc_gid(self):
         guilds = self.guilds
@@ -59,61 +128,3 @@ class TTBot(Bot):
         # set discord gid
         self.set_disc_gid()
 
-    @commands.command(
-        name="register",
-        help="Assign Time Trial role and changes nickname"
-    )
-    async def register(self, ctx: discord.ext.commands.Context, ign):
-        player_data = self.service.check_user_guild(ign)
-        if player_data:
-            guild_id = player_data["guild_id"]
-
-            # if player is already in guild, give "Time Trial" role
-            if guild_id == self.guild_id:
-                # change server nickname to ign
-                await ctx.author.edit(nick=ign)
-                role = discord.utils.get(ctx.guild.roles, name="Time Trial")
-                await ctx.author.add_roles(role)
-                print("Success!", ign, "added!")
-                await ctx.reply(f'Successfully registered!')
-            else:
-                await ctx.reply(f'You need to join Time Trial in-game first!')
-        else:
-            await ctx.reply(f'Failed to retrieve data. Please try again or contact @alliance-officer')
-
-    @commands.command(
-        name="check",
-        help="Check the users who are not in guild or have no nickname set (who will have roles removed on a purge)"
-    )
-    async def check(self, ctx):
-        purged_members = await self.check_non_guild_members(purge=False)
-        embed = discord.Embed(color=discord.Color.blurple(), title="Member Check Report", discription='')
-        msg = "No users are to be purged!"
-        if len(purged_members) > 0:
-            users = ''
-            for user in purged_members:
-                users += '\n- ' + user
-            msg = f'Following users will have their Time Trial role removed on a purge. {users}'
-
-        embed.description = msg
-
-        await ctx.reply(embed=embed)
-
-    @commands.command(
-        name="purge",
-        help="Remove Time Trial role from the users who are not in guild or have no nickname set"
-    )
-    @commands.has_permissions(manage_roles=True)
-    async def purge(self, ctx):
-        purged_members = await self.check_non_guild_members(purge=True)
-        embed = discord.Embed(color=discord.Color.blurple(), title="Purge Report", discription='')
-        msg = "No users were purged!"
-        if len(purged_members) > 0:
-            users = ''
-            for user in purged_members:
-                users += '\n- ' + user
-            msg = f'Following users had their Time Trial role removed. {users}'
-
-        embed.description = msg
-
-        await ctx.reply(embed=embed)
