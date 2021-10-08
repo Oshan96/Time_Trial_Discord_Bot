@@ -23,6 +23,7 @@ class AlbionService:
                 if player["Name"].lower() == username.lower():
                     return {
                         "id": player["Id"],
+                        "player_name": player["Name"],
                         "guild_id": player["GuildId"],
                         "guild_name": player["GuildName"]
                     }
@@ -30,6 +31,16 @@ class AlbionService:
             print("check_user_guild:", username, ": status code:", str(user_response.status_code))
 
         return None
+
+    def check_user_in_guild(self, username):
+        members_list = self.get_members()
+        if members_list:
+            if username.lower() in map(str.lower, members_list)
+                return True, True
+        else:
+            return False, False
+
+        return False, True
 
     def get_members(self):
         url = self.base_url + "guilds/" + self.guild_id + "/members"
