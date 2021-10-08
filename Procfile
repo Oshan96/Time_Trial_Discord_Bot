@@ -1,0 +1,1 @@
+Worker: python time_trial_bot/time_trial_bot.py
