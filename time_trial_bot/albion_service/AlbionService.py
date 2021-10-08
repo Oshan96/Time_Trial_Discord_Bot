@@ -3,9 +3,10 @@ import requests
 
 class AlbionService:
 
-    def __init__(self, guild_id):
+    def __init__(self, guild_id, alliance_id):
         self.base_url = "https://gameinfo.albiononline.com/api/gameinfo/"
         self.guild_id = guild_id
+        self.alliance_id = alliance_id
 
     def get(self, url):
         return requests.get(url)
@@ -25,26 +26,13 @@ class AlbionService:
                         "id": player["Id"],
                         "player_name": player["Name"],
                         "guild_id": player["GuildId"],
-                        "guild_name": player["GuildName"]
+                        "guild_name": player["GuildName"],
+                        "alliance_id": player["AllianceId"]
                     }
         else:
             print("check_user_guild:", username, ": status code:", str(user_response.status_code))
 
         return None
-
-    def check_user_in_guild(self, username):
-        members_list = self.get_members()
-        if members_list:
-            guild_members = []
-            for guild_member_data in members_list:
-                guild_members.append(guild_member_data["Name"].lower())
-
-            if username.lower() in guild_members:
-                return True, True
-        else:
-            return False, False
-
-        return False, True
 
     def get_members(self):
         url = self.base_url + "guilds/" + self.guild_id + "/members"

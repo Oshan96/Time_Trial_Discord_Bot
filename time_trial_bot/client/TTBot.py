@@ -12,9 +12,10 @@ class TTBot(Bot):
         intents.members = True
         super(TTBot, self).__init__(intents=intents, command_prefix="!")
         self.guild_id = "WInSXrwfSMC1P_P07J3d7g"
+        self.alliance_id = "hRqowi9bTw6o44R0bsmIUw"
         self.disc_server_name = "Time Trial"
         self.disc_gid = None
-        self.service = AlbionService(self.guild_id)
+        self.service = AlbionService(self.guild_id, self.alliance_id)
 
         @self.command(
             name="register",
@@ -22,10 +23,13 @@ class TTBot(Bot):
             pass_context=True
         )
         async def register(ctx: discord.ext.commands.Context, ign):
-            ismember, isretrieved = self.service.check_user_in_guild(ign)
-            if isretrieved:
+            player_data = self.service.check_user_guild(ign)
+            if player_data:
+                player_guild_id = player_data["guild_id"]
+                player_alliance_id = player_data["alliance_id"]
+
                 # if player is already in guild, give "Time Trial" role
-                if ismember:
+                if player_guild_id == self.guild_id and player_alliance_id == self.alliance_id:
                     # change server nickname to ign
                     await ctx.author.edit(nick=ign)
                     role = discord.utils.get(ctx.guild.roles, name="Time Trial")
@@ -98,7 +102,8 @@ class TTBot(Bot):
         if guild_members_data:
             guild_members = []
             for guild_member_data in guild_members_data:
-                guild_members.append(guild_member_data["Name"].lower())
+                if guild_member_data["AllianceId"] == self.alliance_id:
+                    guild_members.append(guild_member_data["Name"].lower())
             print(guild_members)
             for guild in self.guilds:
                 if guild.id == self.disc_gid:
