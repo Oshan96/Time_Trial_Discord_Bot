@@ -24,10 +24,10 @@ class TTBot(Bot):
         async def register(ctx: discord.ext.commands.Context, ign):
             player_data = self.service.check_user_guild(ign)
             if player_data:
-                guild_id = player_data["guild_id"]
+                player_guild_id = player_data["guild_id"]
 
                 # if player is already in guild, give "Time Trial" role
-                if guild_id == self.guild_id:
+                if player_guild_id == self.guild_id:
                     # change server nickname to ign
                     await ctx.author.edit(nick=ign)
                     role = discord.utils.get(ctx.guild.roles, name="Time Trial")
